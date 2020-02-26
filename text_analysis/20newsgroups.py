@@ -16,22 +16,43 @@ def data_visualization(shows=False):
         plt.show()
 
 
-def histogram():
+def histogram(skip_plot=False):
     from sklearn.feature_extraction.text import CountVectorizer
+    
     cv = CountVectorizer(stop_words='english', max_features=500)
     transformed = cv.fit_transform(groups.data)
+    if not skip_plot:
+        sas.distplot(np.log(transformed.toarray().sum(axis=0)))
+        plt.xlabel('Log Count')
+        plt.ylabel('Frequency')
+        plt.title('Distribution Plot of 500 Words Counts')
+        plt.show()
+    else:
+        return cv
+
+def clean_words(cv):
+    from nltk.corpus import names
+    from nltk.stem import WordNetLemmatizer
     
-    sas.distplot(np.log(transformed.toarray().sum(axis=0)))
-    plt.xlabel('Log Count')
-    plt.ylabel('Frequency')
-    plt.title('Distribution Plot of 500 Words Counts')
-    plt.show()
+    cleaned = []
+    all_names = set(names.words())
+    lemmatizer = WordNetLemmatizer()
+    
+    for post in groups.data:
+        cleaned.append(' '.join([lemmatizer.lemmatize(word.lower())
+                                for word in post.split()
+                                if word.isalpha() 
+                                and word not in all_names]))
+        
+    transformed = cv.fit_transform(cleaned)
+    print(cv.get_feature_names())
+
 
 def main():
     np.unique(groups.target)
     data_listing()
     data_visualization()
-    histogram()
+    clean_words(histogram(True))
     
 if __name__=='__main__':
     groups = fetch_20newsgroups()
