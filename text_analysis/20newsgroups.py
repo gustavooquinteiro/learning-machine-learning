@@ -30,7 +30,7 @@ def histogram(skip_plot=False):
     else:
         return cv
 
-def clean_words(cv):
+def clean_words(cv, prints=False):
     from nltk.corpus import names
     from nltk.stem import WordNetLemmatizer
     
@@ -45,19 +45,29 @@ def clean_words(cv):
                                 and word not in all_names]))
         
     transformed = cv.fit_transform(cleaned)
-    print(cv.get_feature_names())
+    if prints:
+        print(cv.get_feature_names())
     return transformed
 
-def clustering(transformed):
-    from sklearn.cluster import KMeans
+def clustering(transformed, show=True):
+    if show:
+        from sklearn.cluster import KMeans
+        
+        km = KMeans(n_clusters=20)
+        km.fit(transformed)
+        labels = groups.target
+        plt.scatter(labels, km.labels_)
+        plt.xlabel('Newsgroup')
+        plt.ylabel('Cluster')
+        plt.show()
     
-    km = KMeans(n_clusters=20)
-    km.fit(transformed)
-    labels = groups.target
-    plt.scatter(labels, km.labels_)
-    plt.xlabel('Newsgroup')
-    plt.ylabel('Cluster')
-    plt.show()
+def topic_modeling(transformed, cv):
+    from sklearn.decomposition import NMF
+    
+    nmf = NMF(n_components=100, random_state=43).fit(transformed)
+    for topic_idx, topic in enumerate(nmf.components_):
+        label = '{}: '.format(topic_idx)
+        print(label, ' '.join([cv.get_feature_names()[i] for i in topic.argsort()[:-9:-1]]))
     
 
 def main(np_unique):
@@ -65,7 +75,14 @@ def main(np_unique):
         np.unique(groups.target)
     data_listing()
     data_visualization()
-    clustering(clean_words(histogram(True)))
+    
+    cv = histogram(True)
+    
+    transformed = clean_words(cv)
+    
+    clustering(transformed, False)
+    
+    topic_modeling(transformed, cv)
     
 if __name__=='__main__':
     import sys
