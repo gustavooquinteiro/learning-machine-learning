@@ -46,14 +46,32 @@ def clean_words(cv):
         
     transformed = cv.fit_transform(cleaned)
     print(cv.get_feature_names())
+    return transformed
 
+def clustering(transformed):
+    from sklearn.cluster import KMeans
+    
+    km = KMeans(n_clusters=20)
+    km.fit(transformed)
+    labels = groups.target
+    plt.scatter(labels, km.labels_)
+    plt.xlabel('Newsgroup')
+    plt.ylabel('Cluster')
+    plt.show()
+    
 
-def main():
-    np.unique(groups.target)
+def main(np_unique):
+    if np_unique:
+        np.unique(groups.target)
     data_listing()
     data_visualization()
-    clean_words(histogram(True))
+    clustering(clean_words(histogram(True)))
     
 if __name__=='__main__':
+    import sys
+    
     groups = fetch_20newsgroups()
-    main()
+    
+    np_unique = False if len(sys.argv) > 2 else True
+    
+    main(np_unique)
